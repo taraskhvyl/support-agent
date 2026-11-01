@@ -97,6 +97,20 @@ tests/            offline pytest suite
 evals/run.py      retrieval metric and injection tests (need an API key)
 ```
 
+## Results
+
+Measured with `evals/run.py` on Obsidian Help (1503 chunks, `text-embedding-3-small`, cosine distance):
+
+| Check | Result |
+|---|---|
+| Retrieval hit@3 (14 in-scope questions) | 14/14 |
+| Out-of-scope questions rejected by the relevance threshold (0.6) | 7/8 |
+| Distance range, in-scope top hit | 0.18 to 0.52 |
+| Distance range, out-of-scope top hit | 0.53 to 0.82 |
+| Prompt-injection checks (5 direct attacks + 1 poisoned retrieved chunk, live model) | 0 failures, single run |
+
+The one miss is "How do I install Photoshop plugins?" (0.53): it is close to Obsidian's plugin docs, so vector distance alone cannot separate "near the topic" from "answered here". The threshold is a coarse filter for clearly off-topic questions; the model is the second line of defense (it must answer only from relevant chunks and otherwise offer a ticket). The injection checks assert that the system prompt does not leak, no unapproved ticket is proposed, and other sessions' tickets are not shown; the model is nondeterministic, so one clean run is evidence, not proof. The question set is small and hand-written, so treat these numbers as a sanity check, not a benchmark.
+
 ## Notes and limits
 
 - Chunk size is measured in characters, not tokens, and the relevance threshold (`RELEVANCE_MAX_DISTANCE`) is tuned by hand with `eval.py`.
